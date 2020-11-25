@@ -1,0 +1,7 @@
+requests
+tensorflow
+matplotlib
+numpy
+pandas
+seaborn 
+sklearn
