@@ -12,6 +12,9 @@ from tensorflow.keras.layers import Bidirectional, Dropout, Activation, Dense, L
 from tensorflow.python.keras.layers import CuDNNLSTM
 from tensorflow.keras.models import Sequential
 
+# FYI this model is really slow on CPU 
+# (~2hours to train on an 8GB 2.9GHz Macbook)
+
 # based on this article
 # https://colab.research.google.com/drive/1wWvtA5RC6-is6J8W86wzK52Knr3N1Xbm#scrollTo=Lui1XTi0xVsF
 
@@ -24,28 +27,21 @@ rcParams['figure.figsize'] = 14, 8
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
 
-csv_path = "https://raw.githubusercontent.com/curiousily/Deep-Learning-For-Hackers/master/data/3.stock-prediction/BTC-USD.csv"
-df = pd.read_csv(csv_path, parse_dates=['Date'])
-df = df.sort_values('Date')
+#csv_path = "https://raw.githubusercontent.com/curiousily/Deep-Learning-For-Hackers/master/data/3.stock-prediction/BTC-USD.csv"
+csv_path = './data/original_training/bitstampUSD_1-min_data_2012-01-01_to_2020-09-14.csv'
+df = pd.read_csv(csv_path, parse_dates=['Timestamp'])
+df = df.sort_values('Timestamp')
 
-print(df.head())
-print(df.shape)
-
-ax = df.plot(x='Date', y='Close');
-ax.set_xlabel("Date")
-ax.set_ylabel("Close Price (USD)")
-
+# initiate scaler to scale to [0, 1] later
 scaler = MinMaxScaler()
 close_price = df.Close.values.reshape(-1, 1)
 scaled_close = scaler.fit_transform(close_price)
-print(scaled_close.shape)
 
-print(np.isnan(scaled_close).any())
-
+# remove nans
 scaled_close = scaled_close[~np.isnan(scaled_close)]
-
 scaled_close = scaled_close.reshape(-1, 1)
 
+# set sequence param
 SEQ_LEN = 100
 
 def to_sequences(data, seq_len):
@@ -99,7 +95,29 @@ history = model.fit(
     shuffle=False,
     validation_split=0.1
 )
+
+# model fit
 model.evaluate(X_test, y_test)
+
+# save model
+MODEL_DIR = './data/saved_models'
+MODEL_NAME = 'LSTM'
+version = 1
+export_path = os.path.join(MODEL_DIR, MODEL_NAME, str(version))
+print('export_path = {}\n'.format(export_path))
+
+tf.keras.models.save_model(
+    model,
+    export_path,
+    overwrite=True,
+    include_optimizer=True,
+    save_format=None,
+    signatures=None,
+    options=None
+)
+
+print('\nSaved model:')
+
 
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])

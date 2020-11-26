@@ -13,8 +13,7 @@ fi
 if [ ! -d "./data" ]; then
     mkdir "./data"
 else 
-    rm -rf "./data"
-    mkdir "./data"
+    echo "continuing..."
 fi 
 
 # project specific environment variables
@@ -61,11 +60,11 @@ if [ ! -f "$HOME/.credentials/$PROJECT_ID.json" ]; then
     # gcloud auth login
 
     echo ""
-    echo "Setting project on GCP to $PROJECT_ID"
+    echo "Setting project on GCP to $PROJECT_ID..."
     gcloud config set project "$PROJECT_ID"
 
     echo ""
-    echo "Creating service account and setting GCP environment variable"
+    echo "Creating service account and setting GCP environment variable..."
     gcloud iam service-accounts create "$SERVICE_ACCT" --display-name "Service account for api created with fastAPI"
     gcloud iam service-accounts keys create "$PROJECT_ID.json" --iam-account="$SERVICE_ACCT@$PROJECT_ID.iam.gserviceaccount.com"
     mv "$PROJECT_ID.json" "$HOME/.credentials/$PROJECT_ID.json"
@@ -82,8 +81,6 @@ echo "source venv/bin/activate"
 
 
 echo ""
-echo "Launching API"
-python predict.py
-
-# remove the data folder when app is offline
-rm -rf "./data"
+echo "training model..."
+start_time=`date +%s`
+python predictLSTM.py && echo "run time is $(expr `date +%s` - $start_time) s"
