@@ -8,6 +8,7 @@ from matplotlib import rc
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
+import joblib
 import timeit
 
 ## do not shuffle time series data
@@ -28,15 +29,21 @@ df = df.dropna()
 
 # scaler to scale to [0, 1]
 scaler = MinMaxScaler()
-df_scaled = scaler.fit_transform(df)
+#df_scaled = scaler.fit_transform(df)
 
 # use close price as prediction variable (y)
-y = df_scaled[:, 4]
-X = np.delete(df_scaled, 4, axis=1)
+df_subset = df.head(10000) # first 3% of the data
+y = df_subset.drop(['Timestamp', 'Open', 'High', 'Low', 'Volume_(BTC)',
+       'Volume_(Currency)', 'Weighted_Price'], axis=1)
+X = df_subset[['Timestamp', 'Open', 'High', 'Low', 'Volume_(BTC)',
+       'Volume_(Currency)', 'Weighted_Price']]
+
+X_scaled = scaler.fit_transform(X)
+y_scaled = scaler.fit_transform(y)
 
 # split data
 print("splitting data...")
-X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size = 0.05)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_scaled, shuffle=False, test_size = 0.05)
 
 # define the model 
 # TODO: test results using random state vs not using it 
@@ -52,7 +59,21 @@ print(f"time elapsed during training {elapsed} seconds")
 
 # make prediction on test data
 print("predicting on test data...")
-ytest_ = model.predict(X_test)
+y_hat = model.predict(X_test)
+
+# plot results
+print("plotting result")
+y_test_inverse = scaler.inverse_transform(y_test.reshape(1,-1))
+y_hat_inverse = scaler.inverse_transform(y_hat.reshape(1,-1))
+
+plt.plot(y_test_inverse, label="Actual Price", color='green')
+plt.plot(y_hat_inverse, label="Predicted Price", color='red') 
+plt.title('Bitcoin price prediction')
+plt.xlabel('Time [days]')
+plt.ylabel('Price')
+plt.legend(loc='best')
+ 
+plt.show()
 
 #for i in range(len(ytest_)):
 #    label = scaler.inverse_transform()
