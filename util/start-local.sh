@@ -9,12 +9,23 @@ if [ ! -d "$HOME/.credentials" ]; then
     mkdir "$HOME/.credentials"
 fi 
 
-# make sure data folder exists & is empty when app is live
+# make sure data folder exists & download original training data
 if [ ! -d "./data" ]; then
-    mkdir "./data"
+    echo "Download the training dataset first: https://www.kaggle.com/mczielinski/bitcoin-historical-data"
+    echo "Place the unzipped dataset in './data/original_training'"
+    exit
 else 
-    echo "continuing..."
+    if [ ! -d "./data/original_training"]; then 
+        echo "Download the training dataset first: https://www.kaggle.com/mczielinski/bitcoin-historical-data"
+        echo "Place the unzipped dataset in './data/original_training'"
+        exit
+    else 
+        echo ""
+    fi
 fi 
+
+
+
 
 # project specific environment variables
 export SERVICE_ACCT="fast-api"
@@ -83,4 +94,4 @@ echo "source venv/bin/activate"
 echo ""
 echo "training model..."
 start_time=`date +%s`
-python predictLSTM.py && echo "run time is $(expr `date +%s` - $start_time) s"
+python lstm.py && echo "lstm run time is $(expr `date +%s` - $start_time) s"
