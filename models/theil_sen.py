@@ -11,6 +11,11 @@ from sklearn.linear_model import LinearRegression, TheilSenRegressor
 import joblib
 import timeit
 
+VERSION_NUMBER = 1
+
+# based on this paper
+# https://www.researchgate.net/publication/328989226_Machine_Learning_Models_Comparison_for_Bitcoin_Price_Prediction
+
 ## do not shuffle time series data
 print("setting up parameters...")
 sns.set(style='whitegrid', palette='muted', font_scale=1.5)
@@ -32,7 +37,7 @@ scaler = MinMaxScaler()
 #df_scaled = scaler.fit_transform(df)
 
 # use close price as prediction variable (y)
-df_subset = df.head(10000) # first 3% of the data
+df_subset = df.tail(100000) # 30s for training this subset
 y = df_subset.drop(['Timestamp', 'Open', 'High', 'Low', 'Volume_(BTC)',
        'Volume_(Currency)', 'Weighted_Price'], axis=1)
 X = df_subset[['Timestamp', 'Open', 'High', 'Low', 'Volume_(BTC)',
@@ -61,8 +66,11 @@ print(f"time elapsed during training {elapsed} seconds")
 print("predicting on test data...")
 y_hat = model.predict(X_test)
 
+print(f'saving model...')
+joblib.dump(model, f"./data/saved_models/theilsen-V{VERSION_NUMBER}.model")
+
 # plot results
-print("plotting result")
+print("plotting result...")
 y_test_inverse = scaler.inverse_transform(y_test.reshape(1,-1))
 y_hat_inverse = scaler.inverse_transform(y_hat.reshape(1,-1))
 
@@ -74,6 +82,3 @@ plt.ylabel('Price')
 plt.legend(loc='best')
  
 plt.show()
-
-#for i in range(len(ytest_)):
-#    label = scaler.inverse_transform()
